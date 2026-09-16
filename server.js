@@ -1,33 +1,19 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const dotenv = require('dotenv');
+/* eslint-disable @typescript-eslint/no-require-imports */
+const { createServer } = require("http");
+const next = require("next");
+const { parse } = require("url");
 
-// Load environment variables
-dotenv.config();
+const port = process.env.PORT || 3000;
+const dev = process.env.NODE_ENV !== "production";
+const app = next({ dev });
+const handle = app.getRequestHandler();
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static('.'));
-
-// Import chat API
-const chatHandler = require('./api/chat');
-
-// API endpoint
-app.post('/api/chat', chatHandler);
-
-// Serve static files
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Start server
-app.listen(PORT, () => {
-    console.log(`🚀 Server berjalan di http://localhost:${PORT}`);
-    console.log(`📱 Buka browser dan akses http://localhost:${PORT}`);
-    console.log(`🔑 API Key Gemini: ${process.env.GEMINI_API_KEY ? '✅ Terdeteksi' : '❌ Tidak ditemukan'}`);
+app.prepare().then(() => {
+  createServer((req, res) => {
+    const parsedUrl = parse(req.url, true);
+    handle(req, res, parsedUrl);
+  }).listen(port, (err) => {
+    if (err) throw err;
+    console.log(`> Ready on http://localhost:${port}`);
+  });
 });
